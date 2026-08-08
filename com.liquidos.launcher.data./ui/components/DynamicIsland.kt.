@@ -1,0 +1,69 @@
+package com.liquidos.launcher.ui.components
+
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.liquidos.launcher.presentation.IslandState
+import com.liquidos.launcher.presentation.LauncherViewModel
+
+@Composable
+fun DynamicIslandOverlay(viewModel: LauncherViewModel) {
+    val islandState by viewModel.dynamicIslandState.collectAsState()
+
+    // Căn giữa phía trên cùng màn hình
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp), // Tương đương vị trí camera nốt ruồi
+        contentAlignment = Alignment.TopCenter
+    ) {
+        // Vùng đen của Dynamic Island
+        Box(
+            modifier = Modifier
+                .height(if (islandState is IslandState.Idle) 30.dp else 80.dp)
+                .width(if (islandState is IslandState.Idle) 100.dp else 250.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Color.Black)
+                .clickable {
+                    // Nhấn vào để thu phóng
+                    val newState = if (islandState is IslandState.Idle) IslandState.Expanding else IslandState.Idle
+                    viewModel.triggerDynamicIsland(newState)
+                }
+                // SPRING ANIMATION SIÊU MƯỢT GIỐNG IOS
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = 0.6f, // Độ nảy
+                        stiffness = Spring.StiffnessLow
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            // Nội dung bên trong đảo
+            when (islandState) {
+                is IslandState.Notification -> {
+                    Text(
+                        text = (islandState as IslandState.Notification).title,
+                        color = Color.White
+                    )
+                }
+                is IslandState.MusicPlaying -> {
+                    // Giao diện trình phát nhạc nhỏ
+                }
+                else -> { /* Rỗng (chỉ hiện hố đen camera) */ }
+            }
+        }
+    }
+}
